@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        button {
+            height: 30px;
+            width: 30px;
+            outline: none;
+            margin: 10px;
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 300px;
+            height: 10px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!--<div id="buttonDiv">-->
+    <!--</div>-->
+    <!--<div>-->
+        <!--<p>Choose a different background color!</p>-->
+    <!--</div>-->
+
+    <div class="slidecontainer">
+        Max time to keep tab open with no interaction:
+        <input type="range" min="1" max="60" value="4" class="slider" id="myRange">
+        <span id="value"></span>
+    </div>
+
+</body>
+<script src="options.js"></script>
+</html>

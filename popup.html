@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        button {
+            height: 30px;
+            width: 30px;
+            outline: none;
+        }
+        .container {
+            width: 300px;
+        }
+        .favicon {
+            margin-right: 10px;
+        }
+        .tab {
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .tab:hover{
+            background: rgba(0, 100, 200, 0.3);
+            border-radius: 3px;
+            color: white;
+        }
+        .tab:hover a {
+            color: white;
+        }
+        a {
+            text-decoration: none;
+            color: black;
+        }
+        .x-icon {
+            margin-left: auto;
+            border-radius: 3px;
+        }
+        .x-icon:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .x-icon:hover .heroicon-ui {
+            fill: white
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="savedTabs"></div>
+    </div>
+
+    <template id="tabRow">
+        <div class="tab">
+            <img src="" class="favicon" alt="" height="16" width="16"/>
+            <a href="#"></a>
+            <span class="x-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path class="heroicon-ui" d="M16.24 14.83a1 1 0 0 1-1.41 1.41L12 13.41l-2.83 2.83a1 1 0 0 1-1.41-1.41L10.59 12 7.76 9.17a1 1 0 0 1 1.41-1.41L12 10.59l2.83-2.83a1 1 0 0 1 1.41 1.41L13.41 12l2.83 2.83z"/></svg>
+            </span>
+        </div>
+    </template>
+
+    <script src="popup.js"></script>
+
+</body>
+
+
+
+</html>
+
