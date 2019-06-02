@@ -16,6 +16,7 @@ chrome.runtime.onInstalled.addListener(function() {
   // window.localStorage.setItem('savedTabs', JSON.stringify([]));
   // window.localStorage.setItem('lastInteractionTime', JSON.stringify(new Date().getTime()));
   // window.localStorage.setItem('totalInteractionTime', JSON.stringify(0));
+  // window.localStorage.setItem('totalDomainInteractionTimes', JSON.stringify({}));
 
 });
 
@@ -31,6 +32,27 @@ const maxTimeBetweenInteractions = 2 * min;  // interactions include mouse click
 let maxTimeToKeepTabWithoutInteraction = 2 * min;
 
 
+function getDomain(url) {
+  if (url === undefined) return undefined;
+  try {
+    return new URL(url).hostname;
+  } catch (e) {
+    console.log(url);
+    return undefined;
+  }
+}
+
+function updateDomainInteractionTime(domain, interactionTime) {
+  let totalDomainInteractionTimes = JSON.parse(window.localStorage.getItem('totalDomainInteractionTimes'));
+  if (domain in totalDomainInteractionTimes) {
+    totalDomainInteractionTimes[domain].push(interactionTime);
+  } else {
+    totalDomainInteractionTimes[domain] = [interactionTime];
+  }
+  window.localStorage.setItem('totalDomainInteractionTimes', JSON.stringify(totalDomainInteractionTimes));
+}
+
+
 function updateInteractionTime() {
   let now = new Date().getTime();
   let lastInteractionTime = JSON.parse(window.localStorage.getItem('lastInteractionTime'));
@@ -44,13 +66,26 @@ function updateInteractionTime() {
   window.localStorage.setItem('lastInteractionTime', JSON.stringify(new Date().getTime()));
 }
 
-function updateTabLastUpdated(tabId, openerTabId) {
+function updateTabLastUpdated(tabId, openerTabId, url) {
   let tabs = JSON.parse(window.localStorage.getItem('tabs'));
   let totalInteractionTime = JSON.parse(window.localStorage.getItem('totalInteractionTime'));
   if (!(tabId in tabs)) {
     tabs[tabId] = {};
   }
+
+  // update domain interaction time
+  let now = new Date().getTime();
+  let lastInteractionTime = JSON.parse(window.localStorage.getItem('lastInteractionTime'));
+  if (getDomain(url) === getDomain(tabs[tabId].lastUrl)) {
+    tabs[tabId].currentDomainInteractionTime += now - lastInteractionTime;
+  } else {
+    updateDomainInteractionTime(getDomain(tabs[tabId].lastUrl), tabs[tabId].currentDomainInteractionTime);
+    tabs[tabId].currentDomainInteractionTime = 0;
+  }
+
   tabs[tabId].lastUpdated = totalInteractionTime;
+  tabs[tabId].lastUrl = url;
+
   if (openerTabId !== undefined) {
     tabs[tabId].openedBy = openerTabId;
   }
@@ -115,6 +150,7 @@ function closeOldTabs() {
 
 function tabRemoved(tabId) {
   let tabs = JSON.parse(window.localStorage.getItem('tabs'));
+  updateDomainInteractionTime(getDomain(tabs[tabId].lastUrl), tabs[tabId].currentDomainInteractionTime);
   if (tabId in tabs) {
     delete tabs[tabId];
   }
@@ -127,7 +163,7 @@ chrome.tabs.onCreated.addListener((tab) => {
   if (tab.url === "chrome://newtab/") {
     openerTabId = undefined;
   }
-  updateTabLastUpdated(tab.id, openerTabId);
+  updateTabLastUpdated(tab.id, openerTabId, tab.url);
   closeOldTabs();
 
   chrome.storage.local.get('maxTimeToKeepTabWithoutInteraction', result => {
@@ -136,7 +172,7 @@ chrome.tabs.onCreated.addListener((tab) => {
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  updateTabLastUpdated(tabId);
+  updateTabLastUpdated(tabId, undefined, tab.url);
   updateInteractionTime();
 });
 
@@ -148,13 +184,15 @@ chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
 
 // removing a tab causes it to activate first, which stores the tabs and then sets them after removing the tab
 chrome.tabs.onActivated.addListener((activeInfo) => {
-  updateTabLastUpdated(activeInfo.tabId);
+  chrome.tabs.query({active: true}, result => {
+    updateTabLastUpdated(activeInfo.tabId, undefined, result[0].url);
+  });
   updateInteractionTime();
 });
 
 chrome.runtime.onConnect.addListener(function(port) {
   port.onMessage.addListener(function(msg, sendingPort) {
-    updateTabLastUpdated(sendingPort.sender.tab.id);
+    updateTabLastUpdated(sendingPort.sender.tab.id, undefined, sendingPort.sender.tab.url);
     updateInteractionTime();
   });
 });

@@ -33,6 +33,8 @@ function populateTabs() {
       } else {
         link.innerText = tab.title;
       }
+      link.title = tab.url;
+      tabDiv.title = tab.url;
       tabDiv.onclick = () => {createTab(tab.url); removeTab(tab.id); populateTabs()};
       xIcon.onclick = (e) => {removeTab(tab.id); populateTabs(); e.stopPropagation()};
       savedTabsContainer.appendChild(content);
