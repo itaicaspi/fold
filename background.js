@@ -68,7 +68,9 @@ function updateInteractionTime() {
 
 function updateTabLastUpdated(tabId, openerTabId, url) {
   let tabs = JSON.parse(window.localStorage.getItem('tabs'));
+  tabs = tabs ? tabs : {};
   let totalInteractionTime = JSON.parse(window.localStorage.getItem('totalInteractionTime'));
+  totalInteractionTime  = totalInteractionTime ? totalInteractionTime : 0;
   if (!(tabId in tabs)) {
     tabs[tabId] = {};
   }
