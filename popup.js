@@ -14,6 +14,7 @@ const maxTitleLength = 30;
 
 function populateTabs() {
   let savedTabs = JSON.parse(window.localStorage.getItem('savedTabs'));
+  savedTabs = savedTabs ? savedTabs : [];
   savedTabsContainer.innerHTML = "";
   if (savedTabs.length === 0) {
     savedTabsContainer.innerHTML = "<h4>Nothing here</h4>";

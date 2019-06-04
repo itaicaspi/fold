@@ -97,6 +97,7 @@ function saveTab(tab, preventDuplicates) {
     return;
   }
   let savedTabs = JSON.parse(window.localStorage.getItem('savedTabs'));
+  savedTabs = savedTabs ? savedTabs : [];
   if (preventDuplicates) {
     savedTabs = savedTabs.filter(t => t.url !== tab.url);
   }
