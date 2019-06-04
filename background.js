@@ -44,6 +44,7 @@ function getDomain(url) {
 
 function updateDomainInteractionTime(domain, interactionTime) {
   let totalDomainInteractionTimes = JSON.parse(window.localStorage.getItem('totalDomainInteractionTimes'));
+  totalDomainInteractionTimes = totalDomainInteractionTimes ? totalDomainInteractionTimes : {};
   if (domain in totalDomainInteractionTimes) {
     totalDomainInteractionTimes[domain].push(interactionTime);
   } else {
@@ -56,7 +57,9 @@ function updateDomainInteractionTime(domain, interactionTime) {
 function updateInteractionTime() {
   let now = new Date().getTime();
   let lastInteractionTime = JSON.parse(window.localStorage.getItem('lastInteractionTime'));
+  lastInteractionTime = lastInteractionTime ? lastInteractionTime : 0;
   let totalInteractionTime = JSON.parse(window.localStorage.getItem('totalInteractionTime'));
+  totalInteractionTime = totalInteractionTime ? totalInteractionTime : 0;
   let timePassedSinceLastInteraction = now - lastInteractionTime;
 
   if (timePassedSinceLastInteraction < maxTimeBetweenInteractions) {
@@ -78,6 +81,7 @@ function updateTabLastUpdated(tabId, openerTabId, url) {
   // update domain interaction time
   let now = new Date().getTime();
   let lastInteractionTime = JSON.parse(window.localStorage.getItem('lastInteractionTime'));
+  lastInteractionTime = lastInteractionTime ? lastInteractionTime : 0;
   if (getDomain(url) === getDomain(tabs[tabId].lastUrl)) {
     tabs[tabId].currentDomainInteractionTime += now - lastInteractionTime;
   } else {
@@ -130,7 +134,9 @@ function tabIsClosable(tab) {
 
 function closeOldTabs() {
   let tabs = JSON.parse(window.localStorage.getItem('tabs'));
+  tabs = tabs ? tabs : {};
   let totalInteractionTime = JSON.parse(window.localStorage.getItem('totalInteractionTime'));
+  totalInteractionTime = totalInteractionTime ? totalInteractionTime : 0;
 
   let newTabs = {};
   chrome.tabs.query({}, (result) => {
@@ -153,6 +159,7 @@ function closeOldTabs() {
 
 function tabRemoved(tabId) {
   let tabs = JSON.parse(window.localStorage.getItem('tabs'));
+  tabs = tabs ? tabs : {};
   updateDomainInteractionTime(getDomain(tabs[tabId].lastUrl), tabs[tabId].currentDomainInteractionTime);
   if (tabId in tabs) {
     delete tabs[tabId];
