@@ -31,6 +31,8 @@ const year = 365 * day;
 var lastUpdatedTab = 0;
 var lastActiveTab = 0;
 
+var openTabs = {};
+
 const maxTimeBetweenInteractions = 2 * min;  // interactions include mouse clicks and tab changes / creation / removal
 let maxTimeToKeepTabWithoutInteraction = 2 * min;
 
@@ -101,21 +103,29 @@ function updateTabLastUpdated(tabId, openerTabId, url) {
   window.localStorage.setItem('tabs', JSON.stringify(tabs));
 
   // close the tabs viewer on the last tab if it is present
-  chrome.tabs.getCurrent((tab) => {
-    if (tab.id !== lastActiveTab) {
+  getActiveTab(activeTab => {
+    if (activeTab.id !== lastActiveTab) {
       chrome.tabs.sendMessage(lastActiveTab, {action: "hideTabs"}, function(response) {});
     }
-    lastActiveTab = tab.id;
+    lastActiveTab = activeTab.id;
   });
 
   if (!(tabId in openTabs)) {
     chrome.tabs.get(tabId, (tab) => {
-      openTabs[tabId] = {"screen": "", "tab": tab};
+      setTabEntry(tabId, tab, "");
     });
     chrome.tabs.sendMessage(tabId, {action: "getScreen", tabId: tabId}, function(response) {});
   }
 
   lastUpdatedTab = tabId;
+}
+
+function getActiveTab(callback) {
+  chrome.tabs.query({active: true}, result => {
+    if (result[0]) {
+      callback(result[0]);
+    }
+  });
 }
 
 function saveTab(tab, preventDuplicates) {
@@ -189,7 +199,8 @@ function tabRemoved(tabId) {
 
   if (tabId in openTabs) {
     delete openTabs[tabId];
-    chrome.tabs.getCurrent(activeTab => {
+
+    getActiveTab(activeTab => {
       chrome.tabs.sendMessage(activeTab.id, {action: "refreshTabs", data: openTabs, tabId: activeTab.id}, function(response) {});
     })
   }
@@ -213,9 +224,21 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   updateTabLastUpdated(tabId, undefined, tab.url);
   updateInteractionTime();
   console.log(changeInfo.status);
+
+  // get the screen image of the updating tab once it is finished loading
   if (changeInfo.status === "complete") {
-    console.log("getScreen")
-    chrome.tabs.sendMessage(tabId, {action: "getScreen", tabId: tabId}, function(response) {});
+    console.log("getScreen");
+    getActiveTab(activeTab => {
+      if (activeTab.id === tabId) {
+        // capture the tab screen only if it is the active tab. otherwise we will get a different screen image
+        // attached to this tab.
+        captureActiveTab();
+      } else {
+        // if the updated tab is not active, capture its screen through a DOM parsing script that is run on the content
+        // script.
+        chrome.tabs.sendMessage(tabId, {action: "getScreen", tabId: tabId}, function(response) {});
+      }
+    })
   }
 });
 
@@ -233,33 +256,48 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   updateInteractionTime();
 });
 
-var openTabs = {};
+/**
+ * Capture the screen of the active tab using built in chrome tools and update the openTabs dictionary
+ */
+function captureActiveTab() {
+  getActiveTab(activeTab => {
+    const activeTabId = activeTab.id;
+    chrome.tabs.captureVisibleTab(null, {format: "png"}, (screen) => {
+      setTabEntry(activeTabId, activeTab, screen);
+    });
+  })
+}
+
+function setTabEntry(tabId, tab, screen) {
+  openTabs[tabId] = {'screen': screen, 'tab': tab};
+
+  getActiveTab(activeTab => {
+    chrome.tabs.sendMessage(activeTab.id, {action: "refreshTabs", data: openTabs, tabId: activeTab.id}, function(response) {});
+  })
+}
+
 chrome.runtime.onConnect.addListener(function(port) {
   port.onMessage.addListener(function(msg, sendingPort) {
     if ('screen' in msg) {
       // receive a screen image from the tab content script
-      // console.log(msg['tabId'], msg['screen']);
-      chrome.tabs.captureVisibleTab(null, {format: "png"}, (screen) => {
-        msg['screen'] = screen;
-        console.log(msg['tabId'], msg['screen']);
-        chrome.tabs.get(msg['tabId'], (tab) => {
-          openTabs[msg['tabId']] = {
-            'screen': msg['screen'],
-            'tab': tab
-          };
-        });
-      });
-
+      console.log("received a screen image from the content script");
+      chrome.tabs.get(msg['tabId'], sendingTab => {
+        setTabEntry(sendingTab.id, sendingTab, msg['screen']);
+      })
     } else if ('switchTab' in msg) {
       // switch the active tab to the given tab
       console.log("switchTab", msg['switchTab']);
       chrome.tabs.update(msg['switchTab'], {active: true});
 
+      if ('reopen' in msg && msg['reopen'] === true) {
+        getActiveTab(activeTab => {
+          chrome.tabs.sendMessage(activeTab.id, {action: "showTabs", data: openTabs, tabId: activeTab.id}, function (response) {});
+        });
+      }
     } else if ('addTab' in msg) {
       chrome.tabs.create({active: false}, (tab) => {
-        openTabs[tab.id] = {"screen": "", "tab": tab};
+        setTabEntry(tab.id, tab, "");
         chrome.tabs.sendMessage(tab.id, {action: "getScreen", tabId: tab.id}, function(response) {});
-        chrome.tabs.sendMessage(msg['tabId'], {action: "refreshTabs", data: openTabs, tabId: tab.id}, function(response) {});
       });
     } else if ('closeTab' in msg) {
       // close the given tab
@@ -273,21 +311,19 @@ chrome.runtime.onConnect.addListener(function(port) {
 
         if (shouldReopenTabView) {
           console.log("should reopen")
-          chrome.tabs.query({currentWindow: true, active : true}, (tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, {action: "showTabs", data: openTabs, tabId: tabs[0].id}, function (response) {});
+          getActiveTab(activeTab => {
+            chrome.tabs.sendMessage(activeTab.id, {action: "showTabs", data: openTabs, tabId: activeTab.id}, function (response) {});
           });
         }
       });
 
     } else if ('getTabs' in msg) {
-      console.log(openTabs);
+      console.log("getTabs");
 
       // send all the tab openTabs to the active tab content script
-      chrome.tabs.query({currentWindow: true, active : true}, (tabs) => {
-        if (tabs[0]) {
-          console.log(openTabs);
-          chrome.tabs.sendMessage(tabs[0].id, {action: "showTabs", data: openTabs, tabId: tabs[0].id}, function(response) {});
-        }
+      getActiveTab(activeTab => {
+        console.log(openTabs);
+        chrome.tabs.sendMessage(activeTab.id, {action: "showTabs", data: openTabs, tabId: activeTab.id}, function(response) {});
       });
     } else {
       updateTabLastUpdated(sendingPort.sender.tab.id, undefined, sendingPort.sender.tab.url);

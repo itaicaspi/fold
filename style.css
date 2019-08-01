@@ -3,6 +3,13 @@
 }
 
 #foldTabs {
+  display: unset;
+  flex-direction: unset;
+  flex-shrink: unset;
+  -webkit-flex-shrink: unset;
+  -webkit-box-orient: unset;
+  -webkit-box-direction: unset;
+  -webkit-flex-direction: unset;
   position: fixed;
   left: 0;
   top: 0;
@@ -14,16 +21,41 @@
   overflow: hidden;
   background: rgba(0, 0, 0, 0.2);
   animation: fadeIn 0.7s;
+  text-align: center;
 }
 
-#tabsContainer {
+#foldOmniBox {
+  display: inline-block !important;
+  text-align: left;
+  width: 50%;
+  height: 40px;
+  border-radius: 20px;
+  border-style: none;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 20px;
+  padding: 0 20px;
+  box-shadow: 0 2px 5px 1px rgba(0, 0, 0, 0.1);
+
+}
+
+#foldOmniBox:focus {
+  outline: none;
+}
+
+#foldTabsContainer {
+  flex-direction: unset;
+  flex-shrink: unset;
+  -webkit-flex-shrink: unset;
+  -webkit-box-orient: unset;
+  -webkit-box-direction: unset;
+  -webkit-flex-direction: unset;
   display: flex;
   flex-wrap: wrap;
   width: 100%;
   height: 100%;
   justify-content: center;
   direction: ltr;
-  padding: 20px;
+  padding: 30px 20px;
   overflow-y: auto;
   align-content: flex-start;
 }
@@ -101,6 +133,13 @@
 }
 
 .foldTabTitle {
+  display: block;
+  /*flex-direction: unset;*/
+  flex-shrink: unset;
+  /*-webkit-flex-shrink: unset;*/
+  /*-webkit-box-orient: unset;*/
+  /*-webkit-box-direction: unset;*/
+  /*-webkit-flex-direction: unset;*/
   /*display: flex;*/
   font-family: sans-serif;
   font-size: 16px;
@@ -124,6 +163,13 @@
 }
 
 .foldTabScreen {
+  display: block;
+  flex-direction: unset;
+  flex-shrink: unset;
+  -webkit-flex-shrink: unset;
+  -webkit-box-orient: unset;
+  -webkit-box-direction: unset;
+  -webkit-flex-direction: unset;
   width: 380px;
   height: 250px;
   border-radius: 5px;
@@ -158,6 +204,10 @@
   transform: scale(1.2);
 }
 
+.closeTab > svg {
+  vertical-align: unset;
+}
+
 .foldActiveTab {
   border-width: 3px;
   border-color: rgba(49, 162, 214, 0.9);
@@ -186,17 +236,17 @@
   }
 }
 
-#tabsContainer::-webkit-scrollbar-track
+#foldTabsContainer::-webkit-scrollbar-track
 {
   border-radius: 10px;
 }
 
-#tabsContainer::-webkit-scrollbar
+#foldTabsContainer::-webkit-scrollbar
 {
   width: 10px;
 }
 
-#tabsContainer::-webkit-scrollbar-thumb
+#foldTabsContainer::-webkit-scrollbar-thumb
 {
   border-radius: 10px;
   background-color: #BBB;
