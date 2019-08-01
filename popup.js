@@ -43,7 +43,16 @@ function populateTabs() {
   }
 }
 
-populateTabs();
+// populateTabs();  // TODO: return
+
+chrome.tabs.query({currentWindow: true, active : true}, (tabs) => {
+    if (tabs[0]) {
+      chrome.tabs.sendMessage(tabs[0].id, {action: "showTabs"}, function(response) {});
+      window.close();
+    }
+  }
+);
+
 
 //
 // let changeColor = document.getElementById('changeColor');
