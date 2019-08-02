@@ -1,5 +1,5 @@
 .blurredBody > *:not(#foldTabs) {
-  filter: blur(3px);
+  filter: blur(6px);
 }
 
 #foldTabs {

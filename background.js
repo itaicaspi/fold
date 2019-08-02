@@ -33,6 +33,8 @@ var lastActiveTab = 0;
 
 var openTabs = {};
 
+var dontParseDOMForWebsites = ['youtube'];
+
 const maxTimeBetweenInteractions = 2 * min;  // interactions include mouse clicks and tab changes / creation / removal
 let maxTimeToKeepTabWithoutInteraction = 2 * min;
 
@@ -236,7 +238,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       } else {
         // if the updated tab is not active, capture its screen through a DOM parsing script that is run on the content
         // script.
-        chrome.tabs.sendMessage(tabId, {action: "getScreen", tabId: tabId}, function(response) {});
+        let shouldParseDOM = true;
+        for (let domainName in dontParseDOMForWebsites) {
+          if (tab.url.includes(domainName)) {
+            shouldParseDOM = false;
+          }
+        }
+        if (shouldParseDOM) {
+          chrome.tabs.sendMessage(tabId, {action: "getScreen", tabId: tabId}, function(response) {});
+        }
       }
     })
   }
@@ -295,9 +305,11 @@ chrome.runtime.onConnect.addListener(function(port) {
         });
       }
     } else if ('addTab' in msg) {
-      chrome.tabs.create({active: false}, (tab) => {
-        setTabEntry(tab.id, tab, "");
-        chrome.tabs.sendMessage(tab.id, {action: "getScreen", tabId: tab.id}, function(response) {});
+      chrome.tabs.create({active: false, url: "http://www.google.com"}, (tab) => {
+        setTimeout(() => {
+          setTabEntry(tab.id, tab, "");
+          chrome.tabs.sendMessage(tab.id, {action: "getScreen", tabId: tab.id}, function(response) {});
+        }, 0);
       });
     } else if ('closeTab' in msg) {
       // close the given tab
