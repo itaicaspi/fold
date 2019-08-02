@@ -211,30 +211,32 @@ function updateTitle() {
 
 $(document).keyup(function(e) {
   console.log(sortedTabs)
-  if (e.key === "Escape") {
-    console.log("escape was pressed");
-    hideTabs();
-  } else if (e.key === "ArrowRight") {
-    for (let tabIdx = 0; tabIdx < sortedTabs.length; tabIdx++) {
-      const tabKey = parseInt(sortedTabs[tabIdx][0]);
-      if (tabKey === thisTabId) {
-        if (tabIdx < sortedTabs.length - 1) {
-          console.log(tabIdx + 1);
-          const nextTabId = parseInt(sortedTabs[tabIdx + 1][0]);
-          port.postMessage({'switchTab': nextTabId, 'reopen': true});
-          return;
+  if (tabsViewIsOpen()) {
+    if (e.key === "Escape") {
+      console.log("escape was pressed");
+      hideTabs();
+    } else if (e.key === "ArrowRight") {
+      for (let tabIdx = 0; tabIdx < sortedTabs.length; tabIdx++) {
+        const tabKey = parseInt(sortedTabs[tabIdx][0]);
+        if (tabKey === thisTabId) {
+          if (tabIdx < sortedTabs.length - 1) {
+            console.log(tabIdx + 1);
+            const nextTabId = parseInt(sortedTabs[tabIdx + 1][0]);
+            port.postMessage({'switchTab': nextTabId, 'reopen': true});
+            return;
+          }
         }
       }
-    }
-  } else if (e.key === "ArrowLeft") {
-    for (let tabIdx = 0; tabIdx < sortedTabs.length; tabIdx++) {
-      const tabKey = parseInt(sortedTabs[tabIdx][0]);
-      if (tabKey === thisTabId) {
-        if (tabIdx > 0) {
-          console.log(tabIdx);
-          const nextTabId = parseInt(sortedTabs[tabIdx - 1][0]);
-          port.postMessage({'switchTab': nextTabId, 'reopen': true});
-          return;
+    } else if (e.key === "ArrowLeft") {
+      for (let tabIdx = 0; tabIdx < sortedTabs.length; tabIdx++) {
+        const tabKey = parseInt(sortedTabs[tabIdx][0]);
+        if (tabKey === thisTabId) {
+          if (tabIdx > 0) {
+            console.log(tabIdx);
+            const nextTabId = parseInt(sortedTabs[tabIdx - 1][0]);
+            port.postMessage({'switchTab': nextTabId, 'reopen': true});
+            return;
+          }
         }
       }
     }
